@@ -1,0 +1,50 @@
+# The Candle on Cloudflare Workers.
+# thecandle.io = public homepage. learn.thecandle.io = private school with The Candle's own sign-in.
+name = "the-candle"
+main = "cloudflare-worker.js"
+compatibility_date = "2025-09-01"
+
+# No public workers.dev or preview URLs: only the addresses below.
+workers_dev = false
+preview_urls = false
+
+routes = [
+  { pattern = "thecandle.io", custom_domain = true },
+  { pattern = "www.thecandle.io", custom_domain = true },
+  { pattern = "learn.thecandle.io", custom_domain = true }
+]
+
+# Workers Logs: see errors (for example a failed Stripe call) under the Worker's Logs tab in the Cloudflare dashboard.
+[observability]
+enabled = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+# Every request goes through the Worker first, so it decides what each address may show.
+run_worker_first = true
+
+# Narration audio (ElevenLabs MP3s), served only to signed-in learners at learn.thecandle.io/audio/.
+[[r2_buckets]]
+binding = "AUDIO"
+bucket_name = "the-candle-audio"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "the-candle"
+database_id = "<your-d1-database-id>"
+migrations_dir = "drizzle"
+
+[vars]
+PUBLIC_HOST = "thecandle.io"
+APP_HOST = "learn.thecandle.io"
+TEACHER_EMAIL = "<owner-email>"
+MAIL_FROM = "The Candle <signin@thecandle.io>"
+# Stripe Price IDs (Products → Pricing in the Stripe dashboard). Test-mode IDs until launch.
+STRIPE_PRICE_MONTHLY = "<price_id>"
+STRIPE_PRICE_LIFETIME = "<price_id>"
+# Secrets (set once with `npx wrangler secret put NAME`, never written in this file):
+#   AUTH_SECRET            long random string used to hash sign-in codes
+#   RESEND_API_KEY         API key from resend.com
+#   STRIPE_SECRET_KEY      sk_test_… while testing, sk_live_… at launch
+#   STRIPE_WEBHOOK_SECRET  whsec_… for the endpoint https://thecandle.io/api/billing/webhook
